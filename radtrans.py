@@ -18,18 +18,67 @@ def tau_scatter():
 #-------------------
 #phi-to-xy
 #Returns xy coordinates based on given angle
-#NOTE: add to prev xy value to get new position
+#NOTE: add to prev xyz value to get new position
 #INPUT:
 #    distance: path length xi of the ray
 #    phi: the angle at whish the ray is cast
 #Returns:
 #    x,y: xy values corresponding to the change in position
+def sphtocart(dist,phi,theta):
 
-def phitoxy(dist,phi):
+    x = dist*np.sin(phi)*np.cos(theta)
+    y = dist*np.sin(phi)*np.sin(theta)
+    z = dist*np.cos(phi)
+    return x,y,z
 
-    x = dist*np.cos(phi)
-    y = dist*np.sin(phi)
-    return x,y
+#----------------
+#rantheta
+#Return a randomly calculated theta value from equ A5
+#INPUT:
+#    g: set initially, the asymmetry
+#OUTPUT:
+#    theta: The random theta value
+def rantheta(g):
+    p = ran.uniform(0,1)
+    term1 = 1.+g**2
+    term2 = 1.-g**2
+    term3 = 1. - g + 2*g*p
+
+    theta = (term1 - (term2/term3)**2)/(2.*g)
+
+    return theta
+
+
+#------------------
+#ranphi
+#Return a randomly selected phi value
+#INPUT: None
+#Output:
+#    phi
+def ranphi():
+    p = ran.uniform(0,1)
+    phi = 2.*np.pi*p
+
+    return phi
+
+
+
+
+#--------------
+#isexit
+#Returns a boolean indicating if you've left the sphere of caring
+#May change to vector inputs later
+#INPUT:
+#    initial coordinates and max R
+#OUTPUT:
+#    boolean indicating if at or beyond max radius
+def isexit(x0,y0,z0,x,y,z,R):
+    return np.sqrt((x-x0)**2 + (y-y0)**2 + (z-z0)**2) >= R
+
+
+
+
+#---------------
 
 
 
@@ -85,7 +134,8 @@ khat: Direction of ray - uniformly distributed over 4pi sr
 N: Number of directions
 M: Number of samplings of each direction
 
-
+may need to plot only flattened data (xy only)
+for impressiveness, plot in 3d
 
 '''
 
@@ -97,8 +147,10 @@ M: Number of samplings of each direction
 #   M : Samplings/direction
 #   N : Number of directions
 #   I0: Initial intensity of ray
-#   R : Radius of circle from from A
-#   w : Albedo of the gas
+#   R : Radius of circle from origin from A
+#   w : Albedo of the gas, mathis
+#   g : asymmetry parameter, mathis
+#   nH: number density of the medium, mathis, UNKNOWN
 #
 def init():
     Ax = 0.0
@@ -106,11 +158,15 @@ def init():
     A = np.array([Ax,Ay])
     M = 10
     N = 90
-    I0 = 100.
+    I0 = 5.0E6
     R = 5.
-    w = 0.5
+    w = 0.8
+    g = 0.8
+    nH = 10**2.5
+    sigma = .3326E-24 # cm
 
-    return A,M,N,I0,R,w
+
+    return A,M,N,I0,R,w,g,nH,sigma
 
 def main():
 
