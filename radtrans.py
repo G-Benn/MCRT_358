@@ -4,6 +4,53 @@ import scipy as sp
 from numpy import random as ran
 
 
+'''
+# -*- coding: utf-8 -*-
+from mpl_toolkits.mplot3d import Axes3D
+import matplotlib.pyplot as plt
+import numpy as np
+from itertools import product, combinations
+fig = plt.figure()
+ax = fig.gca(projection='3d')
+ax.set_aspect("equal")
+
+#draw cube
+r = [-1, 1]
+for s, e in combinations(np.array(list(product(r,r,r))), 2):
+    if np.sum(np.abs(s-e)) == r[1]-r[0]:
+        ax.plot3D(*zip(s,e), color="b")
+
+#draw sphere
+u, v = np.mgrid[0:2*np.pi:20j, 0:np.pi:10j]
+x=np.cos(u)*np.sin(v)
+y=np.sin(u)*np.sin(v)
+z=np.cos(v)
+ax.plot_wireframe(x, y, z, color="r")
+
+#draw a point
+ax.scatter([0],[0],[0],color="g",s=100)
+
+#draw a vector
+from matplotlib.patches import FancyArrowPatch
+from mpl_toolkits.mplot3d import proj3d
+
+class Arrow3D(FancyArrowPatch):
+    def __init__(self, xs, ys, zs, *args, **kwargs):
+        FancyArrowPatch.__init__(self, (0,0), (0,0), *args, **kwargs)
+        self._verts3d = xs, ys, zs
+
+    def draw(self, renderer):
+        xs3d, ys3d, zs3d = self._verts3d
+        xs, ys, zs = proj3d.proj_transform(xs3d, ys3d, zs3d, renderer.M)
+        self.set_positions((xs[0],ys[0]),(xs[1],ys[1]))
+        FancyArrowPatch.draw(self, renderer)
+
+a = Arrow3D([0,1],[0,1],[0,1], mutation_scale=20, lw=1, arrowstyle="-|>", color="k")
+ax.add_artist(a)
+plt.show()
+
+'''
+
 
 #--------------------
 #tau_scatter
@@ -65,14 +112,14 @@ def ranphi():
 
 
 #--------------
-#isexit
+#ifexit
 #Returns a boolean indicating if you've left the sphere of caring
 #May change to vector inputs later
 #INPUT:
 #    initial coordinates and max R
 #OUTPUT:
 #    boolean indicating if at or beyond max radius
-def isexit(x0,y0,z0,x,y,z,R):
+def ifexit(x0,y0,z0,x,y,z,R):
     return np.sqrt((x-x0)**2 + (y-y0)**2 + (z-z0)**2) >= R
 
 
@@ -95,7 +142,7 @@ Plotting functions
 #returns: none
 def drawArrow(A, B, axis):
     axis.arrow(A[0], A[1], B[0] - A[0], B[1] - A[1],
-              head_width=0.2, length_includes_head=True)
+              head_width=0.02, length_includes_head=True)
     return
 
 #---------------------
@@ -137,6 +184,15 @@ M: Number of samplings of each direction
 may need to plot only flattened data (xy only)
 for impressiveness, plot in 3d
 
+
+How to:
+walk a ray
+reject if tau isn't close to wanted tau
+repeat until until it reaches the edge of the sphere
+sum up all tau values along the rays
+repeat for N/M rays
+Sum up and average all intensities
+?
 '''
 
 #-------------
@@ -155,11 +211,12 @@ for impressiveness, plot in 3d
 def init():
     Ax = 0.0
     Ay = 0.0
-    A = np.array([Ax,Ay])
+    Az = 0.0
+    A = np.array([Ax,Ay,Az])
     M = 10
     N = 90
     I0 = 5.0E6
-    R = 5.
+    R = 2.
     w = 0.8
     g = 0.8
     nH = 10**2.5
@@ -170,16 +227,17 @@ def init():
 
 def main():
 
-    A,M,N,I0,R,w = init()
-
+    A,M,N,I0,R,w,g,nH,sigma = init()
+    ran.seed(0000)
 
     #Generate testing points
-    X = np.linspace(0,10,num=10)
-    Y = np.linspace(-10,0,num=10)
-    X[:] = 10*ran.random(10)[:]+X[:]
-    Y[:] = 10*ran.random(10)[:]+Y[:]
-    X[0] = A[0]
-    Y[0] = A[1]
+    X = np.zeros(20)
+    Y = np.zeros(20)
+    Z = np.zeros(20)
+    for i in xrange(20): # note: should start at point 0,0,0/origin
+        theta = rantheta(g)
+        phi = ranphi()
+        X[i],Y[i],Z[i] = sphtocart(2,phi,theta)
     #Plotting the final points
     fig1 = plt.figure(1)
     ax1 = fig1.add_subplot(111)
@@ -187,8 +245,8 @@ def main():
     circle = plt.Circle(A, R, color='r', fill=False)
     ax1.add_artist(circle)
 
-    ax1.plot(X[0],Y[0],'g*')
-    ax1.plot(X,Y,'r.')
+    ax1.scatter(X[0],Y[0],s=80,c='b',marker='*') #Colors
+    ax1.plot(X[1:],Y[1:],'r.')
     drawAllArrows(X,Y,ax1)
 
     plt.show()
