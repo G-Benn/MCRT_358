@@ -124,9 +124,57 @@ def ifexit(x0,y0,z0,x,y,z,R):
 
 
 
-
+#Steps:
+#1) Walk until scattered (t=t0)
+#2) Scatter
+#3) Walk
+#4) Repeat until beyond sphere edge
 #---------------
+#MonteCarloWalk
+#Walks a ray until it scatters
+#INPUT:
+    # xyz starting positions (as array/vector)
+    # sigma: absorption cross section
+    # nH: number density of medium
+    # g: the g value from init
+    # R: maximum radius until ray end (as failsafe/shirt circuit
+#OUTPUT:
+    # xyz: ending ray xyz before it's scattered
+    # dtau: The tau value that was added to the ray
+def MonteCarloWalk(x,y,z,sigma,nH,g,R):
+    xold = x
+    yold = y
+    zold = z
+    t0 = tau_scatter()
 
+    ds = -t0 /(sigma*nH)
+    print ds
+
+    theta = rantheta(g)
+    phi = ranphi()
+
+    dx,dy,dz = sphtocart(ds,phi,theta)
+
+    xnew = xold + dx
+    ynew = yold + dy
+    znew = zold + dz
+
+    # If beyond R but closer than 1.1R, or not exited yet
+    # Maybe if almost exited as well
+    if (ifexit(xold,yold,zold,xnew,ynew,znew,R) and ~ifexit(xold,yold,zold,xnew,ynew,znew,1.1*R) ) or ~ifexit(xold,yold,zold,xnew,ynew,znew,R):
+        return xnew, ynew, znew, t0
+    else:
+        return MonteCarloWalk(xold,yold,zold,sigma,nH,g,R)
+        #Redo sampling method recursively - may break and kill memory
+
+
+    #TODO:
+        # REject/rerun/truncate if beyond R
+
+#-----------
+#raystart
+# Same as montecarlo walk, minus exit conditions (shouldn't happen), and with given angles
+#def raystart()
 
 
 
@@ -207,6 +255,9 @@ Sum up and average all intensities
 #   w : Albedo of the gas, mathis
 #   g : asymmetry parameter, mathis
 #   nH: number density of the medium, mathis, UNKNOWN
+#   sigma: absorption cross section of Hydrogen
+#   ds: The "wall distance" until the next scattering event
+
 #
 def init():
     Ax = 0.0
@@ -221,14 +272,27 @@ def init():
     g = 0.8
     nH = 10**2.5
     sigma = .3326E-24 # cm
+    ds = 1.
 
 
-    return A,M,N,I0,R,w,g,nH,sigma
+    return A,M,N,I0,R,w,g,nH,sigma,ds
 
 def main():
 
-    A,M,N,I0,R,w,g,nH,sigma = init()
+    A,M,N,I0,R,w,g,nH,sigma,ds = init()
     ran.seed(0000)
+
+    phis = np.linspace(0,2*np.pi,num=N)
+    thetas = np.linspace(0,np.pi,num=N)
+
+
+    for n in xrange(N):
+        for m in xrange(M):
+            theta0 = thetas[n]
+            phi0 = phis[n]
+
+            #Write initial raystart funciton
+
 
     #Generate testing points
     X = np.zeros(20)
@@ -237,7 +301,7 @@ def main():
     for i in xrange(20): # note: should start at point 0,0,0/origin
         theta = rantheta(g)
         phi = ranphi()
-        X[i],Y[i],Z[i] = sphtocart(2,phi,theta)
+        X[i],Y[i],Z[i] = sphtocart(ds,phi,theta)
     #Plotting the final points
     fig1 = plt.figure(1)
     ax1 = fig1.add_subplot(111)
