@@ -1,0 +1,141 @@
+\documentclass[a4paper]{article}
+
+%% Language and font encodings
+\usepackage[english]{babel}
+\usepackage[utf8x]{inputenc}
+\usepackage[T1]{fontenc}
+
+%% Sets page size and margins
+\usepackage[a4paper,top=3cm,bottom=2cm,left=3cm,right=3cm,marginparwidth=1.75cm]{geometry}
+
+%% Useful packages
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage[colorinlistoftodos]{todonotes}
+\usepackage[colorlinks=true, allcolors=blue]{hyperref}
+
+\title{Monte Carlo Radiative Transfer}
+\author{Gibson Bennett}
+
+\begin{document}
+\maketitle
+
+\section{Project Motivations}
+This project is meant to develop a Monte Carlo Markov Chain method that can be used to model the propagation of radiation in molecular clouds, and to quantify the change of the radiation field with respect to the viewing direction and density contrasts. This is useful for any applications that rely on the ambient radiation field, such as the chemical reaction rates inside of a protostellar cloud so that molecule and planet formation can be modeled. This will be done using reverse Monte Carlo that can be used to trace photon packages. The goal of this project is to develop maps with the 'sky' developed at each camera position such that is appears to be a 'fly-through' of the molecular cloud.
+    
+\section{Background and History of MC Radiation Modeling}
+
+\subsection{History of Monte Carlo}
+The modern Monte Carlo Markov Chain methods were developed in the late 1940s by Stanisaw Ulam while working on the atomic bomb at Los Alamos. He worked together with John von Neumann to develop Monte Carlo methods that could be used to investigate radiation shielding and the distance that neutrons could travel through various materials. This was used in the development of the hydrogen bomb, and the use of these Monte Carlo methods has become widespread. Henry P McKean Jr worked on Markov interpretations of partial differential equations present in fluid dynamics in the 1960s. Monte Carlo methods are used nowadays to solve Feynman-Kac path intervals in quantum mechanics, model signal processing interference, and Bayesian interference, as well as many other uses.
+
+The algorithm was generalized by Hastings in 1970, which helped to improve on the curse of dimensionality that it suffered originally, resulting in the most commonly used algorithm today, Metropolis-Hastings.
+
+
+[Metropolis-hastings]
+
+\subsection{History of Radiation Modeling}
+Around the time that the Monte Carlo methods were originally developed, the most pressing astrophysical problems involving radiative transfer were in stellar atmospheres and interiors, which are 1-D problems that were solved with other faster methods. Scattering and polarization were the most complicated parts of these models, and as a result were often ignored. However, once non-spherical models had to be used, multidimensional geometries and scattering had to be taken into account. This is especially true in fields such as the interstellar medium, where stars (both forming and formed) are surrounded by dusty disks and clumpy envelopes and outflows that are not able to be accounted for by by 1-D methods. Monte Carlo methods are used for this, and they are in widespread use in astronomy today.
+
+The comparison of spatial statistics of a model and observed statistics was the original way of analyzing the interstellar structure, developed in the 1940's by Ambartzumium, and expanded on in the 1950s by Chandrasekhar and M\"unch. In the series of papers they published, they derived a number of equations that were used to develop models that were used to describe the probability distribution of variables that underwent both continuous and discrete changes. The discretized model of interstellar gas that they described is still in use today.
+
+\section{Theory Discussion}
+
+\subsection{Radiative Transfer}
+The equation of radiative transfer that is used in this example is defined as the specific intensity $I_\nu$
+\begin{equation}
+I_\nu = \frac{dE_\nu}{\cos(\theta)dA dt d\nu d\Omega}
+\end{equation}
+where $dE_\nu$ is the radiant energy, $dA$ is the unit surface area at an angle $\theta$ to the surface normal within a solid angle $d\Omega$ in the frequency range $d\nu$ in time $dt$. 
+The photon, or photon packet in this case, represents the energy $dE_\nu$. The flux can also be calculated as
+\begin{equation}
+F_\nu = \int I_\nu \cos(\theta) d\Omega
+\end{equation}
+Whish is the rate of energy flow across $dA$ per unit time per frequency. The photons interact with the particles in the medium as determined by probalistic interactions that are determined by the absorption and scattering cross section $\sigma$.
+In a medium filled with particles with a number density $n$, the change in intensity along a length $dl$ is
+\begin{equation}
+dI_\nu = -I_\nu n \sigma dl
+\end{equation}
+Solving this equation yields the intensity at length $l$ as
+\begin{equation}
+I_\nu(l) = I_{\nu,0} \exp(-n \sigma l)
+\end{equation}
+
+The mean free path, or average distance distance a photon travels between interactions, can be calculated as $1 / n \sigma$.
+
+The optical depth $\tau = n \sigma L$ is used analogously to distance. The probability of a photon traveling a length L can be calculated as
+\begin{equation}
+P(L) = \exp(-\tau)
+\end{equation}
+
+The fate of the photon once it has scattered is determined by the albedo $a$ of the medium, which is the probability that the photon will scatter and is defined as
+\begin{equation}
+a = \frac{n_s\sigma_s}{n_s\sigma_s + n_a\sigma_a}
+\end{equation}
+Where the subscripts refer to the scatters and absorbers. If the photon is scattered, it is scattered into a new direction determined by the angular phase function of the scattering particle. The two most common phase function are the isotropic phase function $P(\mu)=1/2$ and the rayleigh phase function $P(\mu) = \frac{3}{8}(1 + \cos^2(\theta))$, all of which are normalized.
+
+
+\subsection{Monte Carlo}
+In the Monte Carlo method for radiative transfer, the transport of 'photon packets'(simply referred to as photons) through a medium are simulated using probabilistic methods. Known as a 'random walk', this method requires us to describe all radiation sources, trace a path for each photon describing all the interactions, and tabulate the calculated parameters that you're interested in. These parameters can include: intensity, flux, exit angle, exit position (used in imaging), and wavelength. These parameters converge to a mean and become statistically significant when the walk has been calculated a large number of times.
+In order to calculate a quantity $x_0$ from a probability density function $P(x)$, we need to invert the cumulative probability distribution $\Psi(x_0)$, which is the integral of $P(x)$:
+\begin{equation}
+\Psi(x_0) = \frac{\int_x ^{x_0} P(x) dx}{\int_a ^b P(x) dx}
+\end{equation}
+This is referred to as the fundamental principle.
+As $X_0$ goes from $a$ to $b$, $\Psi(x_0)$ ranges from 0 to 1 uniformly. Thus, all you need to perform the Monte Carlo method is a random number generator that samples uniformly (the uniform random deviate $\xi$), and to invert the equation.
+
+From the previous section, the probability that a photon traveling an optical depth $\tau$ before becoming absorbed or scattered is calculated as
+\begin{equation}
+P(\tau) d\tau = \exp(-\tau) d\tau
+\end{equation}
+Applying the fundamental principle to this yields
+\begin{equation}
+\Psi (\tau) = \frac{\int_0 ^{\tau_0} \exp(-\tau)d\tau}{\int_0^\infty \exp(-\tau) d\tau} = 1- \exp(e-tau_0) = \xi
+\end{equation}
+Inverting this equation give us
+\begin{equation}
+\tau_0 = -\log(1-\xi)
+\label{sample}
+\end{equation}
+Where $\xi$ is the uniform random deviate that you get from your random number generator. 
+
+The choice of random number generator is important, and there are a number of different probability density function that can be sampled from. These include: the uniform distribution, inverse probability distribution, Plank distribution, or others.
+
+A scattering angle can be selected from an isotropic distribution $P(\mu,\phi)d\mu d\phi = d\mu / 2d\phi/(2\pi))$, where
+\begin{equation}
+\begin{aligned}
+\mu_0 = 2\xi_1 -1 \\
+\phi_0 = 2\pi \xi_2
+\label{angs}
+\end{aligned}
+\end{equation}
+
+To calculate the problem of photons arriving into a plane-parallel atmosphere at $z=0$, we emit photons from the bottom of this atmosphere at $\tau_z=0$, and the top of the atmosphere if $\tau_z = \tau_{atm}$. The initial position of a photon is $x,y,z = 0,0,0$, and the initial direction is $\mu_0, \phi_0 = 0$., where $\mu$ is $\cos(\theta)$ The optical depth is sampled from equation \ref{sample}, and the photon is moved to a new position $\tau_{znew} = \tau_{zold} + \mu*\tau$. If $\tau_{znew} > \tau_{atm}$, exit the walk; otherwise, sample your direction from equation \ref{angs} and continue your random walk until the photon exits. You can also tabulate the angle of exit when the photon exits. There are a number of properties such as intensity, flux that can be calculated from this information; however, they are all problem specific and will not be discussed here.
+
+Monte Carlo methods are able to be solved in 3-D geometries just as easily as 1-D, isotropic scattering functions as easily as more complicated ones, and low optical depths more easily than high. As a result, Monte Carlo methods excel in these situations. To solve these problems in 3-D, the same calculations are repeated in all directions with the relevant geometries, and as before the photon scatters when $\tau = \tau_0$.
+
+
+
+
+
+
+
+
+
+\section{Bibliography}
+Introduction to Monte Carlo Radiation Transfer; Kenneth Wood, Barbara Whitney, Jon Bjorkman, and Michael Wolff (2013) \\
+Monte Carlo radiative transfer; B. A. Whitney (2011) \\
+Commentary on "The Theory of the Fluctuations in Brightness of the Milky Way" by S. Chandrasekhar and G M\"unch (1952); John Scale (1999) \\
+A Short History of Markov Chain Monte Carlo: Subjective Recollections from Incomplete Data; Christian Robert and George Casella (2012) \\
+Can Reflection From Grains Diagnose the Albedo?; John S. Mathis, Barbara A Whitney, and Kenneth wood (2002) \\
+Dust Heating by the Interstellar Radiation Field in Models of Turbulent Molecular Clouds; Thomas J. Bethell, Ellen G. Zeibel, Fabian Heitsch, and JS Mathis (2004)
+
+
+
+
+
+
+
+
+
+
+\end{document}
