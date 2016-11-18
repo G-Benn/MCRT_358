@@ -1,0 +1,118 @@
+\documentclass[a4paper, 10pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{siunitx}
+\usepackage{graphicx}
+\usepackage[margin=1.0in]{geometry}
+
+\renewcommand{\baselinestretch}{2} 
+
+\title{}
+\author{Andrew Tillett}
+\begin{document}
+
+\noindent Andrew Tillett
+
+\noindent October 25, 2016
+
+\noindent PHYS 358
+
+\begin{center}
+Radiative Transfer with Reverse Monte Carlo Techniques
+\end{center}
+
+The topic of radiative transfer is one of the most vital and fundamental concepts which must be understood for astronomy and astrophysics. On a basic level, observational astronomy is dependent on the understanding of radiative transfer because it is through this process that information about other astrophysical topics are acquired. The light that is observed has often traveled through several mediums and has thus been affected greatly by radiative transfer. In molecular clouds, radiative transfer is also fundamental to the chemical reactions that can occur in space. These reactions can further lead to star and planetary formation, and it is with successful and efficient models of radiative transfer that these interstellar processes can be better understood.  
+
+	In 1950, Chandrasekhar and Münch proposed that extinction, the absorption and scattering of radiation by a medium between the object of interest and the observer, could be used to accurately understand and interpret interstellar turbulence.$^1$ However, it was not until many years later that the numerical methods and computational modeling became accurate and efficient enough for this process to be used in a worthwhile way. In the late 1990s and early 2000s Padoan and Nordlund and Juvela and Padoan worked on some of the earliest models of radiative transfer in molecular clouds.$^1$ Early models of radiative transfer in molecular clouds focused mainly on idealized models of molecular clouds, with models remaining spherical in shape and uniform in density. This was both because of a need for simplification and because of a lack of evidence to support large scale clumping in molecular clouds.$^2$ More recently, models have been extended to include both changes in densities within the cloud and shapes that were more complicated than perfect spheres. 
+    
+	The method of Markov Chain Monte Carlo was developed during World War II by Stanislaw Ulam and John von Neumann as a way of studying transport of neutrons through different materials.$^3$ At the same time, John von Neumann developed the middle-square method of producing pseudorandom numbers in an efficient and timely way, which was used in close conjunction with the Monte Carlo method as it relies heavily on the need for randomly generated numbers. In the following years, the Metropolis-Hastings variant of the Monte Carlo method was developed first by Nick Metropolis before later being simplified and expanded by W.K. Hastings.$^3$ 
+
+The Monte Carlo method utilizes random numbers and random sampling to obtain results which would otherwise be difficult to determine in traditional or analytical solutions. At its core, the method relies on the idea that given enough truly random projections of potential outcomes, that a true solution may be reached by determining the results which occur at the highest frequency. The Monte Carlo method works by first sampling from a proposed probability density function; this point is then either accepted or rejected in accordance with the probability function.$^4$ The probability function of the method can be given by the following equation:
+\begin{equation}
+\int P(x)dx= \psi (x_0)
+\end{equation}
+
+ \noindent where $P(x)$ is the probability density function and $x_0$ is the desired value. The random number which must be generated for the method can be given by:
+\begin{equation}
+\zeta=\psi (x_0)
+\end{equation}
+
+ \noindent This point is then either accepted or rejected. This is done by sampling from the distribution again, and comparing it to the point $P(x_0)$. If this value is larger and the newly sampled value, $x_0$ is accepted, if it is smaller, it is rejected. 
+
+In the context of radiative transfer, a beam of radiation can be defined to have the following intensity, where $dA$ is the surface through which the beam is passing, occurring at an angle $\theta$, $dt$ is the time, $d\nu$ is the frequency range, and $d\Omega$ is the solid angle:
+\begin{equation}
+I_\nu=\frac{dE_\nu}{cos(\theta) dA dt d\nu d\Omega}
+\end{equation}
+
+\noindent This equation for intensity can be used to find the equation of radiative transfer, which is given by: 
+\begin{equation}
+\frac{dI_\nu}{dl}=-I_\nu*k_\nu + j_\nu
+\end{equation}
+
+\noindent where $k_\nu$ is defined as the opacity of the medium, or the measure of how impenetrable a medium is to electromagnetic radiation, and $j_\nu$ is the emissivity, or how effective a medium is at emitting energy. The path length of this medium is $l$. 
+
+This equation can subsequently be rewritten in terms of the optical depth, $\tau_\nu$. This is first done by defining 
+\begin{equation}
+\tau_\nu=\int \rho k_\nu dl
+\end{equation}
+
+\noindent and 
+\begin{equation}
+S_\nu=\frac{j_\nu}{k_\nu}
+\end{equation}
+
+\noindent Finally, this gives us an equation for radiative transfer: 
+\begin{equation}
+\frac{dI_\nu}{d\tau_\nu}=-I_\nu+S_\nu
+\end{equation}
+
+For this problem, of radiation propagating through a molecular cloud, a reverse Monte Carlo method will be used, where instead of propagating the photon rays from the edge of the cloud to the interior, a section of the interior will be selected, and the photon rays these will be propagated back outward to the edge of the molecular cloud. 
+
+For this reverse method, each photon will be assigned a weight function, $W$, which will be the probability that the photon ray will successfully travel from the interior of the molecular cloud to the edge without being absorbed.$^1$ The weight equation is
+\begin{equation}
+W=exp(-\tau_a^{tot}) 
+\end{equation}
+
+\noindent where $\tau_a^{tot}$ is the absorption optical depth. 
+
+Now that the weight function has been defined, the trajectory of a photon beam through the molecular cloud can be approximated around $N$ total directions from the starting point using $M$ trajectories and an initial direction $k_i$. For this, the distance between locations of scattering can be found as a measure of optical depth, $\tau_s$, using a randomly generated number, $p$, where
+\begin{equation}
+\tau_s=-ln(p)
+\end{equation}
+
+When the distance to the next scattering location has been determined, a new direction must then be determined. This can be done using a scattering phase function proposed by Henyey and Greenstein in 1941:$^1$
+\begin{equation}
+\Phi(\theta)=\frac{(1/4\pi)(1-g^2)}{(1+g^2-2gcos(\theta))^{3/2}}
+\end{equation}
+
+\noindent When this function is integrated and inverted, the new polar angle can be found with
+\begin{equation}
+\theta(p)=\frac{(1+g^2)-[(1-g^2)/(1-g^2+2gp)]^2}{2g}
+\end{equation}
+
+\noindent where $p$ is once again a random number. The new azimuthal angle is given by $\phi=2\pi p$. These two deflection angles produce the new direction $k_{i+1}$.$^1$ 
+
+This process of scattering through path length determinations and direction changes is repeated until the photon ray comes into contact with the edge of the molecular cloud, and the photon ray escapes into space. 
+
+In this reverse Monte Carlo method, the initial direction, $k_i$, is sampled through $M$ trajectories. When this has been completed, a new initial direction is determined, and another $M$ trajectories are determined such that there is eventually a total of $NM$ trajectories which have been sampled.$^1$ When this is completed, the radiation being emitted from the molecular cloud will be able to be modeled. 
+
+\pagebreak 
+
+\begin{center} 
+Works Cited
+\end{center}
+
+1. Bethell et al. (2004). DUST HEATING BY THE INTERSTELLAR RADIATION FIELD IN MODELS OF TURBULENT MOLECULAR CLOUDS. The Astrophysical Journal, (610), 801–812.
+
+2. Mathis, Whitney, and Wood. (2002). CAN REFLECTION FROM GRAINS DIAGNOSE THE ALBEDO? The Astrophysical Journal, (574), 812–821.
+
+3.  Robert, Casella . (2011). A Short History of Markov Chain Monte Carlo: Subjective Recollections from Incomplete Data. Statistical Science, 26(1), 102–115.
+
+4. Forgan, D. (2009). An Introduction to Monte Carlo Radiative Transfer, 1–22.
+
+5. Whitney. (2011). Monte Carlo radiative transfer. Astronomical Society of India, 39, 1–27.
+
+
+
+
+
+\end{document}
