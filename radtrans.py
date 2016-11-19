@@ -7,6 +7,8 @@ from itertools import product, combinations
 from matplotlib.patches import FancyArrowPatch
 from mpl_toolkits.mplot3d import proj3d
 
+plt.style.use('seaborn-dark-palette')
+
 #For those on Python3
 def xrange(x):
     return iter(range(x))
@@ -23,6 +25,17 @@ def tau_scatter():
     #print "p",p
     #print "tau_s",tau_s
     return tau_s
+
+#-------------------
+#Returns the tau value that is a function of the albedo
+#INPUT:
+    # w: The albedo of the cloud
+    # tau: The original scattered tau
+#OUTPUT:
+    # New albedo-scaled tau value
+def alb_tau(w,tau):
+    return tau*((1./w) - 1)
+
 
 #-------------------
 #phi-to-xy
@@ -252,7 +265,7 @@ def init():
     Ay = 0.0
     Az = 0.0
     A = np.array([Ax,Ay,Az])
-    M = 10
+    M = 5
     N = 90
     I0 = 5.0E6
     R = 5.
@@ -270,15 +283,43 @@ def main():
     A,M,N,I0,R,w,g,nH,sigma,ds = init()
     ran.seed(1020)
 
+
+    #setup figure and plot initial sphere
+    fig = plt.figure(num=1,figsize=(10,10))
+    ax = fig.gca(projection='3d')
+    ax._axis3don = False
+    ax.set_aspect("equal")
+    ax.set_xlabel("x")
+    ax.set_ylabel("y")
+    ax.set_zlabel("z")
+    ax.set_title("Random walk for a ray")
+
+    colors = ['k','b','g','r','c'] # Length M, will probably need to be changed, temp
+
+    # draw outer sphere
+    u, v = np.mgrid[0:2 * np.pi:20j, 0:np.pi:10j]
+    x = R * np.cos(u) * np.sin(v)
+    y = R * np.sin(u) * np.sin(v)
+    z = R * np.cos(v)
+    ax.plot_wireframe(x, y, z, color="r")
+
+    # draw initial starting point
+    ax.scatter([A[0]], [A[1]], [A[2]], color="g", marker='8', s=100)
+
     phis = np.linspace(0,2*np.pi,num=N)
     thetas = np.linspace(0,np.pi,num=N)
 
-    pos = np.full((50,3),None,dtype='float64') #the array of points - index corresponds to pos number - 50 is placeholder
-    #print pos
-    #print A
-    tau = 0
+    taus = np.zeros((N,M))
+
     for n in xrange(N):
         for m in xrange(M):
+
+            pos = np.full((50, 3), None,
+                          dtype='float64')  # the array of points - index corresponds to pos number - 50 is placeholder
+            # print pos
+            # print A
+            tau = 0
+
             theta0 = thetas[n]
             phi0 = phis[n]
 
@@ -293,58 +334,34 @@ def main():
                 dx,dy,dz, dtau = MonteCarloWalk(pos[run,0],pos[run,1],pos[run,2],sigma,nH,g,R)
                 pos[run+1,:] = np.array([dx,dy,dz])
 
-                tau += dtau
+                # Tau is being scaled by albedo here - may need to be placed into MCW instead
+                tau += alb_tau(w,dtau)
                 run += 1
 
+                print "runs", run
+                print pos[:5, :]
+                print "tau", tau
 
-            #test
 
+                #Mask and plot all arrows for run
+                maskpos = np.isfinite(pos[:, 0])
+                goodpos = pos[maskpos, :]
+                for i in xrange(goodpos.shape[0] - 1):
+                    a = Arrow3D([goodpos[i, 0], goodpos[i + 1, 0]], [goodpos[i, 1], goodpos[i + 1, 1]],
+                                [goodpos[i, 2], goodpos[i + 1, 2]], mutation_scale=10, lw=1, arrowstyle="-|>",color=colors[m])
+                    ax.add_artist(a)
+
+                taus[n,m] = tau
             #break
         break
-    print "runs", run
-    print pos[:5,:]
 
+    tau_avg = np.mean(taus)
+    I_end = I0 * np.exp(-tau_avg)
+    print("Average tau %.5e" % tau_avg) # will be too low, b/c array mostly zeros
 
-
-
-    fig = plt.figure()
-    ax = fig.gca(projection='3d')
-    ax._axis3don = False
-    ax.set_aspect("equal")
-    ax.set_xlabel("x")
-    ax.set_ylabel("y")
-    ax.set_zlabel("z")
-    ax.set_title("Random walk for a ray")
-
-    # draw outer sphere
-    u, v = np.mgrid[0:2 * np.pi:20j, 0:np.pi:10j]
-    x = R*np.cos(u) * np.sin(v)
-    y = R*np.sin(u) * np.sin(v)
-    z = R*np.cos(v)
-    ax.plot_wireframe(x, y, z, color="r")
-
-    # draw initial starting point
-    ax.scatter([A[0]], [A[1]], [A[2]], color="g",marker='8', s=100)
-
-    #Draw arrows
-
-    #mask pos for all valid values of pos, then use that
-    maskpos = np.isfinite(pos[:,0])
-    goodpos = pos[maskpos,:]
-    for i in xrange(goodpos.shape[0] - 1):
-        a = Arrow3D([goodpos[i,0], goodpos[i+1,0]], [goodpos[i,1], goodpos[i+1,1]], [goodpos[i,2], goodpos[i+1,2]], mutation_scale=10, lw=1, arrowstyle="-|>", color="k")
-        ax.add_artist(a)
-
-
-
-
-
-    #a = Arrow3D([A[0], .5], [A[1], 0], [A[2], 2], mutation_scale=20, lw=1, arrowstyle="-|>", color="k")
-    #ax.add_artist(a)
-
-
-
-
+    print("Starting Intensity %.5e" % I0)
+    print ("Average ending Intensity %.5e" % I_end) # Too high, b/c tau too low
+    #Output of the Intensity
 
     plt.show()
 
