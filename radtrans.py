@@ -2,55 +2,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 import scipy as sp
 from numpy import random as ran
-
-
-'''
-# -*- coding: utf-8 -*-
 from mpl_toolkits.mplot3d import Axes3D
-import matplotlib.pyplot as plt
-import numpy as np
 from itertools import product, combinations
-fig = plt.figure()
-ax = fig.gca(projection='3d')
-ax.set_aspect("equal")
-
-#draw cube
-r = [-1, 1]
-for s, e in combinations(np.array(list(product(r,r,r))), 2):
-    if np.sum(np.abs(s-e)) == r[1]-r[0]:
-        ax.plot3D(*zip(s,e), color="b")
-
-#draw sphere
-u, v = np.mgrid[0:2*np.pi:20j, 0:np.pi:10j]
-x=np.cos(u)*np.sin(v)
-y=np.sin(u)*np.sin(v)
-z=np.cos(v)
-ax.plot_wireframe(x, y, z, color="r")
-
-#draw a point
-ax.scatter([0],[0],[0],color="g",s=100)
-
-#draw a vector
 from matplotlib.patches import FancyArrowPatch
 from mpl_toolkits.mplot3d import proj3d
 
-class Arrow3D(FancyArrowPatch):
-    def __init__(self, xs, ys, zs, *args, **kwargs):
-        FancyArrowPatch.__init__(self, (0,0), (0,0), *args, **kwargs)
-        self._verts3d = xs, ys, zs
-
-    def draw(self, renderer):
-        xs3d, ys3d, zs3d = self._verts3d
-        xs, ys, zs = proj3d.proj_transform(xs3d, ys3d, zs3d, renderer.M)
-        self.set_positions((xs[0],ys[0]),(xs[1],ys[1]))
-        FancyArrowPatch.draw(self, renderer)
-
-a = Arrow3D([0,1],[0,1],[0,1], mutation_scale=20, lw=1, arrowstyle="-|>", color="k")
-ax.add_artist(a)
-plt.show()
-
-'''
-
+'''NOTE: SIGMA/NH IS CAUSING DS TO BECOME TOO LARGE. USING TEST VALUE'''
 
 #--------------------
 #tau_scatter
@@ -60,6 +17,8 @@ plt.show()
 def tau_scatter():
     p = ran.uniform(0,1)
     tau_s = -np.log(p)
+    print "p",p
+    print "tau_s",tau_s
     return tau_s
 
 #-------------------
@@ -146,9 +105,9 @@ def MonteCarloWalk(x,y,z,sigma,nH,g,R):
     yold = y
     zold = z
     t0 = tau_scatter()
-
+    #print "t0", t0
     ds = -t0 /(sigma*nH)
-    print ds
+    #print "ds",ds
 
     theta = rantheta(g)
     phi = ranphi()
@@ -161,10 +120,10 @@ def MonteCarloWalk(x,y,z,sigma,nH,g,R):
 
     # If beyond R but closer than 1.1R, or not exited yet
     # Maybe if almost exited as well
-    if (ifexit(xold,yold,zold,xnew,ynew,znew,R) and ~ifexit(xold,yold,zold,xnew,ynew,znew,1.1*R) ) or ~ifexit(xold,yold,zold,xnew,ynew,znew,R):
-        return xnew, ynew, znew, t0
-    else:
-        return MonteCarloWalk(xold,yold,zold,sigma,nH,g,R)
+    #if (ifexit(xold,yold,zold,xnew,ynew,znew,R) and ~ifexit(xold,yold,zold,xnew,ynew,znew,1.1*R) ) or ~ifexit(xold,yold,zold,xnew,ynew,znew,R):
+    return xnew, ynew, znew, t0
+    #else:
+    #    return MonteCarloWalk(xold,yold,zold,sigma,nH,g,R)
         #Redo sampling method recursively - may break and kill memory
 
 
@@ -174,13 +133,42 @@ def MonteCarloWalk(x,y,z,sigma,nH,g,R):
 #-----------
 #raystart
 # Same as montecarlo walk, minus exit conditions (shouldn't happen), and with given angles
-#def raystart()
+#INPUT:
+    # pos: vector of xyz intial points
+    # phi: initila phi of ray
+    # theta: initial theta of ray
+    # ds: the length of the ray
+#OUTPUT:
+    # pos: updated positions of the ray
+def raystart(pos,phi,theta,ds):
+    pos[0] += ds*np.sin(theta)*np.cos(phi)
+    pos[1] += ds*np.sin(theta)*np.sin(phi)
+    pos[2] += ds*np.cos(theta)
 
+    #print ds*np.sin(theta)*np.cos(phi)
+    #print ds*np.sin(theta)*np.sin(phi)
+    #print ds * np.cos(theta)
+    return pos
 
 
 '''
 Plotting functions
 '''
+
+#---------------------
+class Arrow3D(FancyArrowPatch):
+    def __init__(self, xs, ys, zs, *args, **kwargs):
+        FancyArrowPatch.__init__(self, (0,0), (0,0), *args, **kwargs)
+        self._verts3d = xs, ys, zs
+
+    def draw(self, renderer):
+        xs3d, ys3d, zs3d = self._verts3d
+        xs, ys, zs = proj3d.proj_transform(xs3d, ys3d, zs3d, renderer.M)
+        self.set_positions((xs[0],ys[0]),(xs[1],ys[1]))
+        FancyArrowPatch.draw(self, renderer)
+
+
+
 #---------------------
 #drawArrow
 #    Draws an arrow representing the path and direction between 2 points
@@ -229,9 +217,6 @@ khat: Direction of ray - uniformly distributed over 4pi sr
 N: Number of directions
 M: Number of samplings of each direction
 
-may need to plot only flattened data (xy only)
-for impressiveness, plot in 3d
-
 
 How to:
 walk a ray
@@ -267,12 +252,12 @@ def init():
     M = 10
     N = 90
     I0 = 5.0E6
-    R = 2.
+    R = 5.
     w = 0.8
     g = 0.8
     nH = 10**2.5
-    sigma = .3326E-24 # cm
-    ds = 1.
+    sigma = .3326E-2#E-24 # cm # TEST VALUE
+    ds = 1
 
 
     return A,M,N,I0,R,w,g,nH,sigma,ds
@@ -280,20 +265,88 @@ def init():
 def main():
 
     A,M,N,I0,R,w,g,nH,sigma,ds = init()
-    ran.seed(0000)
+    ran.seed(1020)
 
     phis = np.linspace(0,2*np.pi,num=N)
     thetas = np.linspace(0,np.pi,num=N)
 
-
+    pos = np.full((50,3),None) #the array of points - index corresponds to pos number - 50 is placeholder
+    print pos
+    #print A
+    tau = 0
     for n in xrange(N):
         for m in xrange(M):
             theta0 = thetas[n]
             phi0 = phis[n]
 
-            #Write initial raystart funciton
+            pos[0,:] = A[:]
+            pos[1, :] = raystart(pos[0, :].copy(), phi0, theta0, ds)
+
+            run=1
+            while run < 49 and ~ifexit(pos[0,0],pos[0,1],pos[0,2],pos[run,0],pos[run,1],pos[run,2],R):
+                if run==48: #last run
+                    print "Need more possible runs"
+
+                dx,dy,dz, dtau = MonteCarloWalk(pos[run,0],pos[run,1],pos[run,2],sigma,nH,g,R)
+                pos[run+1,:] = np.array([dx,dy,dz])
+
+                tau += dtau
+                run += 1
 
 
+            #test
+
+            break
+        break
+    print "runs", run
+    print pos[:5,:]
+
+
+
+
+    fig = plt.figure()
+    ax = fig.gca(projection='3d')
+    ax._axis3don = False
+    ax.set_aspect("equal")
+    ax.set_xlabel("x")
+    ax.set_ylabel("y")
+    ax.set_zlabel("z")
+    ax.set_title("Random walk for a ray")
+
+    # draw outer sphere
+    u, v = np.mgrid[0:2 * np.pi:20j, 0:np.pi:10j]
+    x = R*np.cos(u) * np.sin(v)
+    y = R*np.sin(u) * np.sin(v)
+    z = R*np.cos(v)
+    ax.plot_wireframe(x, y, z, color="r")
+
+    # draw initial starting point
+    ax.scatter([A[0]], [A[1]], [A[2]], color="g",marker='8', s=100)
+
+    #Draw arrows
+
+    #mask pos for all valid values of pos, then use that
+    maskpos = np.isfinite(pos[:,0])
+    goodpos = pos[maskpos,:]
+    for i in xrange(goodpos.shape[0] - 1):
+        a = Arrow3D([goodpos[i,0], goodpos[i+1,0]], [goodpos[i,1], goodpos[i+1,1]], [goodpos[i,2], goodpos[i+1,2]], mutation_scale=10, lw=1, arrowstyle="-|>", color="k")
+        ax.add_artist(a)
+
+
+
+
+
+    #a = Arrow3D([A[0], .5], [A[1], 0], [A[2], 2], mutation_scale=20, lw=1, arrowstyle="-|>", color="k")
+    #ax.add_artist(a)
+
+
+
+
+
+    plt.show()
+
+
+'''
     #Generate testing points
     X = np.zeros(20)
     Y = np.zeros(20)
@@ -314,6 +367,6 @@ def main():
     drawAllArrows(X,Y,ax1)
 
     plt.show()
-
+'''
 
 main()
