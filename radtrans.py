@@ -7,6 +7,9 @@ from itertools import product, combinations
 from matplotlib.patches import FancyArrowPatch
 from mpl_toolkits.mplot3d import proj3d
 
+#For those on Python3
+def xrange(x):
+    return iter(range(x))
 '''NOTE: SIGMA/NH IS CAUSING DS TO BECOME TOO LARGE. USING TEST VALUE'''
 
 #--------------------
@@ -17,8 +20,8 @@ from mpl_toolkits.mplot3d import proj3d
 def tau_scatter():
     p = ran.uniform(0,1)
     tau_s = -np.log(p)
-    print "p",p
-    print "tau_s",tau_s
+    #print "p",p
+    #print "tau_s",tau_s
     return tau_s
 
 #-------------------
@@ -270,8 +273,8 @@ def main():
     phis = np.linspace(0,2*np.pi,num=N)
     thetas = np.linspace(0,np.pi,num=N)
 
-    pos = np.full((50,3),None) #the array of points - index corresponds to pos number - 50 is placeholder
-    print pos
+    pos = np.full((50,3),None,dtype='float64') #the array of points - index corresponds to pos number - 50 is placeholder
+    #print pos
     #print A
     tau = 0
     for n in xrange(N):
@@ -296,7 +299,7 @@ def main():
 
             #test
 
-            break
+            #break
         break
     print "runs", run
     print pos[:5,:]
