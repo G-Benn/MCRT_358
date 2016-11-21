@@ -1,8 +1,10 @@
 # Monte Carlo Radiative Transfer - PHYS358 final project  
 
 [Overleaf document for the report](https://www.overleaf.com/7025264gkhpvqkzbmhc)  
-[really useful paper](http://www.roe.ac.uk/ifa/postgrad/pedagogy/2009_forgan.pdf)
-[Another useful paper](http://www-star.st-and.ac.uk/~kw25/research/montecarlo/book.pdf)
+[Google slides for the presentation](https://docs.google.com/presentation/d/1lzemPMShl1LB_wILCbhqzipogmPadVocHsXa0bz1HtM/edit?usp=sharing)    
+  
+[really useful paper](http://www.roe.ac.uk/ifa/postgrad/pedagogy/2009_forgan.pdf)  
+[Another useful paper](http://www-star.st-and.ac.uk/~kw25/research/montecarlo/book.pdf)  
 
 All the pdfs and code for the project should be in here, and we'll edit it as we go along
 
