@@ -98,6 +98,17 @@ def ifexit(x0,y0,z0,x,y,z,R):
     return np.sqrt((x-x0)**2 + (y-y0)**2 + (z-z0)**2) >= R
 
 
+#------------
+#updates the nH value becauce it varies/is not constant - normally
+#INPT: nH: current density
+#OUTPUT: nH+deltanH
+def nHupdate(nH):
+    rannum = np.random.normal(0,.04*nH)
+    nH += rannum
+    return nH
+
+
+
 
 #Steps:
 #1) Walk until scattered (t=t0)
@@ -122,6 +133,7 @@ def MonteCarloWalk(x,y,z,sigma,nH,g,R):
     zold = z
     t0 = tau_scatter()
     #print "t0", t0
+    nH = nHupdate(nH)
     ds = -t0 /(sigma*nH)
     #print "ds",ds
 
@@ -268,12 +280,12 @@ def init():
     M = 5
     N = 90
     I0 = 5.0E6
-    R = 5.
+    R = .15
     w = 0.8
     g = 0.8
-    nH = 10**2.5
-    sigma = .3326E-2#E-24 # cm # TEST VALUE
-    ds = 1
+    nH = 1E3
+    sigma = 3.326E-2#E-24 # cm # TEST VALUE
+    ds = 5E-3
 
 
     return A,M,N,I0,R,w,g,nH,sigma,ds
@@ -304,7 +316,7 @@ def main():
     ax.plot_wireframe(x, y, z, color="r")
 
     # draw initial starting point
-    ax.scatter([A[0]], [A[1]], [A[2]], color="g", marker='8', s=100)
+    ax.scatter([A[0]], [A[1]], [A[2]], color="g", marker='$\\ast$', s=150)
 
     phis = np.linspace(0,2*np.pi,num=N)
     thetas = np.linspace(0,np.pi,num=N)
