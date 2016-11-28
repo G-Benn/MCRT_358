@@ -14,6 +14,7 @@ def xrange(x):
     return iter(range(x))
 '''NOTE: SIGMA/NH IS CAUSING DS TO BECOME TOO LARGE. USING TEST VALUE'''
 
+
 #--------------------
 #tau_scatter
 #Returns the possible optical depth to the next scattering depth
@@ -277,10 +278,10 @@ def init():
     Ay = 0.0
     Az = 0.0
     A = np.array([Ax,Ay,Az])
-    M = 5
+    M = 10
     N = 90
-    I0 = 5.0E6
-    R = .15
+    I0 = 1.5E10
+    R = .5
     w = 0.8
     g = 0.8
     nH = 1E3
@@ -293,7 +294,7 @@ def init():
 def main():
 
     A,M,N,I0,R,w,g,nH,sigma,ds = init()
-    ran.seed(1020)
+    ran.seed(0000)
 
 
     #setup figure and plot initial sphere
@@ -306,7 +307,7 @@ def main():
     ax.set_zlabel("z")
     ax.set_title("Random walk for a ray")
 
-    colors = ['k','b','g','r','c'] # Length M, will probably need to be changed, temp
+    colors = ['k','b','g','r','c','m','y','0.75','#eeefff','#efa023'] # Length M, will probably need to be changed, temp
 
     # draw outer sphere
     u, v = np.mgrid[0:2 * np.pi:20j, 0:np.pi:10j]
@@ -326,8 +327,7 @@ def main():
     for n in xrange(N):
         for m in xrange(M):
 
-            pos = np.full((50, 3), None,
-                          dtype='float64')  # the array of points - index corresponds to pos number - 50 is placeholder
+            pos = np.full((1500, 3), None, dtype='float64')  # the array of points - index corresponds to pos number - 50 is placeholder
             # print pos
             # print A
             tau = 0
@@ -339,8 +339,8 @@ def main():
             pos[1, :] = raystart(pos[0, :].copy(), phi0, theta0, ds)
 
             run=1
-            while run < 49 and ~ifexit(pos[0,0],pos[0,1],pos[0,2],pos[run,0],pos[run,1],pos[run,2],R):
-                if run==48: #last run
+            while run < 1499 and ~ifexit(pos[0,0],pos[0,1],pos[0,2],pos[run,0],pos[run,1],pos[run,2],R):
+                if run==1498: #last run
                     print "Need more possible runs"
 
                 dx,dy,dz, dtau = MonteCarloWalk(pos[run,0],pos[run,1],pos[run,2],sigma,nH,g,R)
@@ -350,55 +350,42 @@ def main():
                 tau += alb_tau(w,dtau)
                 run += 1
 
-                print "runs", run
-                print pos[:5, :]
-                print "tau", tau
+                #print "runs", run
+                #print pos[:5, :]
+                #print "tau", tau
 
 
                 #Mask and plot all arrows for run
                 maskpos = np.isfinite(pos[:, 0])
                 goodpos = pos[maskpos, :]
+                '''
                 for i in xrange(goodpos.shape[0] - 1):
                     a = Arrow3D([goodpos[i, 0], goodpos[i + 1, 0]], [goodpos[i, 1], goodpos[i + 1, 1]],
                                 [goodpos[i, 2], goodpos[i + 1, 2]], mutation_scale=10, lw=1, arrowstyle="-|>",color=colors[m])
                     ax.add_artist(a)
+                '''
+            taus[n,m] = tau
 
-                taus[n,m] = tau
             #break
-        break
+        #break
+    #print taus
 
-    tau_avg = np.mean(taus)
+    tau_max = np.amax(taus)
+    tau_min = np.amin(taus)
+    tau_avg = np.sum(taus) * (1./float(N*M))
     I_end = I0 * np.exp(-tau_avg)
     print("Average tau %.5e" % tau_avg) # will be too low, b/c array mostly zeros
+    print("Max tau: %.5e \t Min tau %.5e" % (tau_max, tau_min))
+
 
     print("Starting Intensity %.5e" % I0)
     print ("Average ending Intensity %.5e" % I_end) # Too high, b/c tau too low
+    print("Max Iend: %.5e \t Min Iend %.5e" % (I0 * np.exp(-tau_max), I0 * np.exp(-tau_min)))
     #Output of the Intensity
 
     plt.show()
 
 
-'''
-    #Generate testing points
-    X = np.zeros(20)
-    Y = np.zeros(20)
-    Z = np.zeros(20)
-    for i in xrange(20): # note: should start at point 0,0,0/origin
-        theta = rantheta(g)
-        phi = ranphi()
-        X[i],Y[i],Z[i] = sphtocart(ds,phi,theta)
-    #Plotting the final points
-    fig1 = plt.figure(1)
-    ax1 = fig1.add_subplot(111)
 
-    circle = plt.Circle(A, R, color='r', fill=False)
-    ax1.add_artist(circle)
-
-    ax1.scatter(X[0],Y[0],s=80,c='b',marker='*') #Colors
-    ax1.plot(X[1:],Y[1:],'r.')
-    drawAllArrows(X,Y,ax1)
-
-    plt.show()
-'''
 
 main()
