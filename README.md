@@ -1,6 +1,6 @@
 # Monte Carlo Radiative Transfer - PHYS358 final project  
 
-[Overleaf document for the report](https://www.overleaf.com/7025264gkhpvqkzbmhc)  
+[Overleaf document for the report](https://www.overleaf.com/read/tytzmgjwvxdw)  
 [Google slides for the presentation](https://docs.google.com/presentation/d/1lzemPMShl1LB_wILCbhqzipogmPadVocHsXa0bz1HtM/edit?usp=sharing)    
   
 [really useful paper](http://www.roe.ac.uk/ifa/postgrad/pedagogy/2009_forgan.pdf)  
