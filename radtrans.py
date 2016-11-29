@@ -7,13 +7,15 @@ from itertools import product, combinations
 from matplotlib.patches import FancyArrowPatch
 from mpl_toolkits.mplot3d import proj3d
 
-plt.style.use('seaborn-dark-palette')
-
 #For those on Python3
 def xrange(x):
     return iter(range(x))
-'''NOTE: SIGMA/NH IS CAUSING DS TO BECOME TOO LARGE. USING TEST VALUE'''
 
+'''
+Currently, plotting is turned off and M/N is very large.
+Recommended values for seeing plots: M=5-10,N=1-5
+Recommended values for accurate values (non-plotting): M>=10, N<=45
+'''
 
 #--------------------
 #tau_scatter
@@ -147,17 +149,8 @@ def MonteCarloWalk(x,y,z,sigma,nH,g,R):
     ynew = yold + dy
     znew = zold + dz
 
-    # If beyond R but closer than 1.1R, or not exited yet
-    # Maybe if almost exited as well
-    #if (ifexit(xold,yold,zold,xnew,ynew,znew,R) and ~ifexit(xold,yold,zold,xnew,ynew,znew,1.1*R) ) or ~ifexit(xold,yold,zold,xnew,ynew,znew,R):
     return xnew, ynew, znew, t0
-    #else:
-    #    return MonteCarloWalk(xold,yold,zold,sigma,nH,g,R)
-        #Redo sampling method recursively - may break and kill memory
 
-
-    #TODO:
-        # REject/rerun/truncate if beyond R
 
 #-----------
 #raystart
@@ -278,10 +271,10 @@ def init():
     Ay = 0.0
     Az = 0.0
     A = np.array([Ax,Ay,Az])
-    M = 10
-    N = 90
+    M = 100
+    N = 900
     I0 = 1.5E10
-    R = .5
+    R = .12
     w = 0.8
     g = 0.8
     nH = 1E3
@@ -294,7 +287,7 @@ def init():
 def main():
 
     A,M,N,I0,R,w,g,nH,sigma,ds = init()
-    ran.seed(0000)
+    ran.seed(1054)
 
 
     #setup figure and plot initial sphere
@@ -354,11 +347,11 @@ def main():
                 #print pos[:5, :]
                 #print "tau", tau
 
-
+                '''
                 #Mask and plot all arrows for run
                 maskpos = np.isfinite(pos[:, 0])
                 goodpos = pos[maskpos, :]
-                '''
+
                 for i in xrange(goodpos.shape[0] - 1):
                     a = Arrow3D([goodpos[i, 0], goodpos[i + 1, 0]], [goodpos[i, 1], goodpos[i + 1, 1]],
                                 [goodpos[i, 2], goodpos[i + 1, 2]], mutation_scale=10, lw=1, arrowstyle="-|>",color=colors[m])
@@ -367,7 +360,7 @@ def main():
             taus[n,m] = tau
 
             #break
-        #break
+        break
     #print taus
 
     tau_max = np.amax(taus)
