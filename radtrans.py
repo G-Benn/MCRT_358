@@ -334,7 +334,7 @@ def main():
             run=1
             while run < 1499 and ~ifexit(pos[0,0],pos[0,1],pos[0,2],pos[run,0],pos[run,1],pos[run,2],R):
                 if run==1498: #last run
-                    print "Need more possible runs"
+                    print ("Need more possible runs")
 
                 dx,dy,dz, dtau = MonteCarloWalk(pos[run,0],pos[run,1],pos[run,2],sigma,nH,g,R)
                 pos[run+1,:] = np.array([dx,dy,dz])
